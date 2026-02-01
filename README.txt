@@ -1,158 +1,158 @@
 ================================================================================
   Doomsday - GNOME Extension
-  D-Day 카운트다운 GNOME 패널 확장 프로그램
+  D-Day Countdown Extension for GNOME Shell
 ================================================================================
 
 GNOME Version: 45, 46, 47
 License: GPL-3.0
 
 --------------------------------------------------------------------------------
-주요 기능
+Features
 --------------------------------------------------------------------------------
 
-✓ GNOME 패널에 D-Day 표시
-  - 중요한 이벤트까지 남은 날짜를 실시간으로 확인
+✓ D-Day Display in GNOME Panel
+  - Real-time countdown to important events on your panel
 
-✓ 여러 D-Day 관리
-  - 무제한 이벤트 추가 및 관리
+✓ Multiple D-Day Management
+  - Unlimited events with easy add, edit, and delete
 
-✓ 빠른 추가/수정/삭제
-  - 메뉴에서 바로 D-Day를 추가, 수정, 삭제 가능
+✓ Quick Add/Edit/Delete
+  - Manage D-Days directly from extension menu without opening preferences
 
-✓ 이벤트 선택
-  - 클릭 한 번으로 표시할 이벤트 전환
+✓ Event Selection
+  - Switch between events with a single click
 
-✓ 패널 위치 설정
-  - 좌측, 중앙, 우측 중 선택 가능
+✓ Panel Position Customization
+  - Choose left, center, or right panel position
 
-✓ 자동 업데이트
-  - 매일 자정에 자동으로 카운트다운 갱신
+✓ Automatic Updates
+  - Daily countdown refresh at midnight
 
 --------------------------------------------------------------------------------
-설치 방법
+Installation
 --------------------------------------------------------------------------------
 
-[방법 1] Extension Manager 사용 (권장)
+[Method 1] Extension Manager (Recommended)
 
-1. Extension Manager 앱 실행
-2. "Install from file..." 선택
-3. doomsday@devastator-x.github.io.shell-extension.zip 선택
-4. Extension 활성화
+1. Open Extension Manager app
+2. Click "Install from file..."
+3. Select doomsday@devastator-x.github.io.shell-extension.zip
+4. Enable the extension
 
-[방법 2] 수동 설치
+[Method 2] Manual Installation
 
-# 저장소 클론
+# Clone repository
 git clone https://github.com/devastator-x/doomsday.git
 cd doomsday
 
-# 설치 스크립트 실행
+# Run installation script
 ./install.sh
 
-# GNOME Shell 재시작 (Alt+F2, 'r', Enter)
+# Restart GNOME Shell (Alt+F2, type 'r', press Enter)
 
-[방법 3] ZIP 파일로 설치
+[Method 3] Install from ZIP
 
-# Extension 디렉토리에 압축 해제
+# Extract to extension directory
 mkdir -p ~/.local/share/gnome-shell/extensions/doomsday@devastator-x.github.io
 unzip doomsday@devastator-x.github.io.shell-extension.zip \
   -d ~/.local/share/gnome-shell/extensions/doomsday@devastator-x.github.io
 
-# 스키마 컴파일
+# Compile schema
 glib-compile-schemas \
   ~/.local/share/gnome-shell/extensions/doomsday@devastator-x.github.io/schemas/
 
-# Extension 활성화
+# Enable extension
 gnome-extensions enable doomsday@devastator-x.github.io
 
-# GNOME Shell 재시작 (Alt+F2, 'r', Enter)
+# Restart GNOME Shell (Alt+F2, type 'r', press Enter)
 
 --------------------------------------------------------------------------------
-사용법
+Usage
 --------------------------------------------------------------------------------
 
-[D-Day 추가]
+[Adding D-Day]
 
-1. 패널의 D-Day 클릭
-2. "➕ Add D-Day" 선택
-3. 이벤트 이름과 날짜(YYYY-MM-DD) 입력
-4. "Add" 클릭
+1. Click D-Day on panel
+2. Select "➕ Add D-Day"
+3. Enter event name and date (YYYY-MM-DD format)
+4. Click "Add"
 
-[D-Day 수정/삭제]
+[Editing/Deleting D-Day]
 
-• 메뉴에서: 각 D-Day 항목 우측의 ✏️(수정) 또는 🗑️(삭제) 버튼 클릭
-• 설정에서: "⚙️ Manage Events" → Edit/Delete 버튼 사용
+• From Menu: Click ✏️ (edit) or 🗑️ (delete) button next to each event
+• From Settings: Click "⚙️ Manage Events" → Use Edit/Delete buttons
 
-[표시할 D-Day 선택]
+[Selecting D-Day to Display]
 
-• 메뉴에서 원하는 D-Day 클릭 (점(•)으로 선택된 항목 표시)
+• Click on any D-Day in the menu (selected item marked with •)
 
-[패널 위치 변경]
+[Changing Panel Position]
 
-1. "⚙️ Manage Events" 클릭
-2. "Panel Settings"에서 위치와 인덱스 조정
-
---------------------------------------------------------------------------------
-배포 방법
---------------------------------------------------------------------------------
-
-[GNOME Extensions 웹사이트에 업로드]
-
-1. extensions.gnome.org 계정 생성
-2. 로그인 후 "Upload Extension" 클릭
-3. doomsday@devastator-x.github.io.shell-extension.zip 업로드
-4. 심사 대기 (1-2주 소요)
-5. 승인 후 자동 배포
-
-[GitHub Releases로 배포]
-
-1. GitHub 저장소 생성
-2. Releases에 ZIP 파일 업로드
-3. 사용자들이 직접 다운로드하여 설치
-
-[로컬/직접 배포]
-
-• ZIP 파일을 직접 공유하여 수동 설치
+1. Click "⚙️ Manage Events"
+2. Adjust position and index in "Panel Settings"
 
 --------------------------------------------------------------------------------
-개발
+Distribution Methods
 --------------------------------------------------------------------------------
 
-# 개발 모드로 설치
+[Upload to GNOME Extensions Website]
+
+1. Create account at extensions.gnome.org
+2. Login and click "Upload Extension"
+3. Upload doomsday@devastator-x.github.io.shell-extension.zip
+4. Wait for review (1-2 weeks)
+5. Automatic distribution after approval
+
+[GitHub Releases Distribution]
+
+1. Create GitHub repository
+2. Upload ZIP file to Releases
+3. Users download and install manually
+
+[Direct Distribution]
+
+• Share ZIP file directly for manual installation
+
+--------------------------------------------------------------------------------
+Development
+--------------------------------------------------------------------------------
+
+# Install in development mode
 git clone https://github.com/devastator-x/doomsday.git
 cd doomsday
 ./install.sh
 
-# 로그 확인
+# View logs
 journalctl -f -o cat /usr/bin/gnome-shell
 
-# Extension 재시작 (Alt+F2, 'r', Enter)
+# Restart extension (Alt+F2, type 'r', press Enter)
 
 --------------------------------------------------------------------------------
-파일 구조
+File Structure
 --------------------------------------------------------------------------------
 
 doomsday@devastator-x.github.io/
-├── extension.js                 # 메인 extension 로직
-├── prefs.js                     # 설정 UI
-├── metadata.json                # Extension 메타데이터
-├── stylesheet.css               # 스타일
-├── schemas/                     # GSettings 스키마
+├── extension.js                 # Main extension logic
+├── prefs.js                     # Preferences UI
+├── metadata.json                # Extension metadata
+├── stylesheet.css               # Styles
+├── schemas/                     # GSettings schema
 │   └── org.gnome.shell.extensions.doomsday.gschema.xml
-├── install.sh                   # 설치 스크립트
-└── README.txt                   # 이 파일
+├── install.sh                   # Installation script
+└── README.txt                   # This file
 
 --------------------------------------------------------------------------------
-라이선스
+License
 --------------------------------------------------------------------------------
 
 GPL-3.0 License
-자세한 내용은 LICENSE 파일을 참고하세요.
+See LICENSE file for details.
 
 --------------------------------------------------------------------------------
-기여
+Contributing
 --------------------------------------------------------------------------------
 
-버그 리포트와 기능 제안은 GitHub Issues에 올려주세요!
+Bug reports and feature requests welcome!
 https://github.com/devastator-x/doomsday/issues
 
 --------------------------------------------------------------------------------
