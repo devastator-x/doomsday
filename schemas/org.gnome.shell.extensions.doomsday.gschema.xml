@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.doomsday"
+          path="/org/gnome/shell/extensions/doomsday/">
+
+    <!-- Array of D-Day events stored as JSON string -->
+    <key type="s" name="dday-events">
+      <default>'[]'</default>
+      <summary>D-Day Events</summary>
+      <description>
+        JSON array of D-Day events with format:
+        [{"id": "uuid-1", "name": "결혼식", "date": "2026-02-06"}, ...]
+      </description>
+    </key>
+
+    <!-- Currently selected D-Day event ID -->
+    <key type="s" name="selected-event-id">
+      <default>''</default>
+      <summary>Selected Event ID</summary>
+      <description>UUID of the currently displayed D-Day event</description>
+    </key>
+
+    <!-- Position in panel (optional for future enhancement) -->
+    <key type="s" name="panel-position">
+      <default>'center'</default>
+      <summary>Panel Position</summary>
+      <description>Position in top panel: left, center, or right</description>
+    </key>
+
+    <!-- Index within the panel box -->
+    <key type="i" name="panel-index">
+      <default>0</default>
+      <range min="-1" max="99"/>
+      <summary>Panel Index</summary>
+      <description>Position index within the panel box (-1 for rightmost, 0 for leftmost)</description>
+    </key>
+
+  </schema>
+</schemalist>

@@ -1,0 +1,22 @@
+# Compiled schema
+schemas/gschemas.compiled
+
+# ZIP package
+*.shell-extension.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.claude/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.log

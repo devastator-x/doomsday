@@ -1,0 +1,9 @@
+{
+  "uuid": "doomsday@devastator-x.github.io",
+  "name": "Doomsday",
+  "description": "Display D-Day countdowns in the top panel bar. Track important events with customizable countdown timers.",
+  "shell-version": ["45", "46", "47"],
+  "url": "https://github.com/devastator-x",
+  "settings-schema": "org.gnome.shell.extensions.doomsday",
+  "version": 1
+}
