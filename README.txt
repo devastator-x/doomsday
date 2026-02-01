@@ -92,28 +92,6 @@ Usage
 2. Adjust position and index in "Panel Settings"
 
 --------------------------------------------------------------------------------
-Distribution Methods
---------------------------------------------------------------------------------
-
-[Upload to GNOME Extensions Website]
-
-1. Create account at extensions.gnome.org
-2. Login and click "Upload Extension"
-3. Upload doomsday@devastator-x.github.io.shell-extension.zip
-4. Wait for review (1-2 weeks)
-5. Automatic distribution after approval
-
-[GitHub Releases Distribution]
-
-1. Create GitHub repository
-2. Upload ZIP file to Releases
-3. Users download and install manually
-
-[Direct Distribution]
-
-• Share ZIP file directly for manual installation
-
---------------------------------------------------------------------------------
 Development
 --------------------------------------------------------------------------------
 
