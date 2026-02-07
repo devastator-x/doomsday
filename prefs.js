@@ -1,4 +1,4 @@
-import Gtk from 'gi://Gtk?version=4.0';
+import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -6,6 +6,8 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 
 export default class DoomsdayPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
+        const settings = this.getSettings();
+
         // Create a preferences page
         const page = new Adw.PreferencesPage({
             title: 'General',
@@ -21,7 +23,6 @@ export default class DoomsdayPreferences extends ExtensionPreferences {
         page.add(panelGroup);
 
         // Panel position selector
-        this._settings = this.getSettings();
         const positionRow = new Adw.ComboRow({
             title: 'Panel Position',
             subtitle: 'Choose where the extension appears in the top panel',
@@ -34,14 +35,14 @@ export default class DoomsdayPreferences extends ExtensionPreferences {
         positionRow.set_model(positionModel);
 
         // Set initial value
-        const currentPosition = this._settings.get_string('panel-position');
+        const currentPosition = settings.get_string('panel-position');
         const positions = ['left', 'center', 'right'];
         positionRow.set_selected(positions.indexOf(currentPosition));
 
         // Connect to changes
         positionRow.connect('notify::selected', () => {
             const newPosition = positions[positionRow.get_selected()];
-            this._settings.set_string('panel-position', newPosition);
+            settings.set_string('panel-position', newPosition);
         });
 
         panelGroup.add(positionRow);
@@ -60,12 +61,12 @@ export default class DoomsdayPreferences extends ExtensionPreferences {
         }));
 
         // Set initial value
-        const currentIndex = this._settings.get_int('panel-index');
+        const currentIndex = settings.get_int('panel-index');
         indexRow.set_value(currentIndex);
 
         // Connect to changes
         indexRow.connect('changed', () => {
-            this._settings.set_int('panel-index', indexRow.get_value());
+            settings.set_int('panel-index', indexRow.get_value());
         });
 
         panelGroup.add(indexRow);
@@ -84,10 +85,232 @@ export default class DoomsdayPreferences extends ExtensionPreferences {
         });
         group.add(listBox);
 
+        let radioGroup = null;
+
+        // Local function: create event row
+        const createEventRow = (event, isSelected) => {
+            const row = new Adw.ActionRow({
+                title: event.name,
+                subtitle: event.date,
+            });
+
+            // Add radio button for selection
+            const radioButton = new Gtk.CheckButton({
+                active: isSelected,
+                valign: Gtk.Align.CENTER,
+            });
+            radioButton.connect('toggled', () => {
+                if (radioButton.get_active()) {
+                    settings.set_string('selected-event-id', event.id);
+                }
+            });
+            row.add_prefix(radioButton);
+
+            // Make all radio buttons part of same group
+            if (!radioGroup) {
+                radioGroup = radioButton;
+            } else {
+                radioButton.set_group(radioGroup);
+            }
+
+            // Add edit button
+            const editButton = new Gtk.Button({
+                icon_name: 'document-edit-symbolic',
+                label: 'Edit',
+                valign: Gtk.Align.CENTER,
+                css_classes: ['flat'],
+                tooltip_text: 'Edit this event',
+            });
+            editButton.connect('clicked', () => showEventDialog(window, event));
+            row.add_suffix(editButton);
+
+            // Add delete button
+            const deleteButton = new Gtk.Button({
+                icon_name: 'user-trash-symbolic',
+                label: 'Delete',
+                valign: Gtk.Align.CENTER,
+                css_classes: ['flat', 'destructive-action'],
+                tooltip_text: 'Delete this event',
+            });
+            deleteButton.connect('clicked', () => deleteEvent(event.id));
+            row.add_suffix(deleteButton);
+
+            return row;
+        };
+
+        // Local function: load events
+        const loadEvents = () => {
+            // Clear existing rows
+            let child = listBox.get_first_child();
+            while (child) {
+                const next = child.get_next_sibling();
+                listBox.remove(child);
+                child = next;
+            }
+
+            // Reset radio group
+            radioGroup = null;
+
+            // Load events from settings
+            const eventsJson = settings.get_string('dday-events');
+            const selectedId = settings.get_string('selected-event-id');
+
+            try {
+                const events = JSON.parse(eventsJson);
+
+                events.forEach(event => {
+                    const row = createEventRow(event, event.id === selectedId);
+                    listBox.append(row);
+                });
+
+                // Show placeholder if no events
+                if (events.length === 0) {
+                    const row = new Adw.ActionRow({
+                        title: 'No D-Day events yet',
+                        subtitle: 'Click "Add D-Day Event" to create your first countdown',
+                    });
+                    listBox.append(row);
+                }
+
+            } catch (e) {
+                console.error('Doomsday: Failed to load events:', e);
+            }
+        };
+
+        // Local function: save event
+        const saveEvent = (eventId, name, date) => {
+            const eventsJson = settings.get_string('dday-events');
+            let events = [];
+
+            try {
+                events = JSON.parse(eventsJson);
+            } catch (e) {
+                console.error('Doomsday: Failed to parse events:', e);
+            }
+
+            if (eventId) {
+                // Update existing event
+                const index = events.findIndex(e => e.id === eventId);
+                if (index !== -1) {
+                    events[index] = { id: eventId, name, date };
+                }
+            } else {
+                // Create new event with UUID
+                const newId = GLib.uuid_string_random();
+                events.push({ id: newId, name, date });
+
+                // Auto-select if it's the first event
+                if (events.length === 1) {
+                    settings.set_string('selected-event-id', newId);
+                }
+            }
+
+            // Save back to settings
+            settings.set_string('dday-events', JSON.stringify(events));
+        };
+
+        // Local function: delete event
+        const deleteEvent = (eventId) => {
+            const eventsJson = settings.get_string('dday-events');
+            let events = [];
+
+            try {
+                events = JSON.parse(eventsJson);
+            } catch (e) {
+                console.error('Doomsday: Failed to parse events:', e);
+                return;
+            }
+
+            // Remove event
+            events = events.filter(e => e.id !== eventId);
+
+            // If deleted event was selected, clear selection or select first
+            const selectedId = settings.get_string('selected-event-id');
+            if (selectedId === eventId) {
+                const newSelectedId = events.length > 0 ? events[0].id : '';
+                settings.set_string('selected-event-id', newSelectedId);
+            }
+
+            // Save back to settings
+            settings.set_string('dday-events', JSON.stringify(events));
+        };
+
+        // Local function: show event dialog
+        const showEventDialog = (parentWindow, existingEvent) => {
+            const dialog = new Adw.MessageDialog({
+                transient_for: parentWindow,
+                modal: true,
+                heading: existingEvent ? 'Edit D-Day Event' : 'New D-Day Event',
+            });
+
+            // Create form content
+            const box = new Gtk.Box({
+                orientation: Gtk.Orientation.VERTICAL,
+                spacing: 12,
+                margin_top: 12,
+                margin_bottom: 12,
+                margin_start: 12,
+                margin_end: 12,
+            });
+
+            // Event name entry
+            const nameEntry = new Adw.EntryRow({
+                title: 'Event Name',
+            });
+            if (existingEvent) {
+                nameEntry.set_text(existingEvent.name);
+            }
+            box.append(nameEntry);
+
+            // Date picker (using entry for simplicity)
+            const dateEntry = new Adw.EntryRow({
+                title: 'Date (YYYY-MM-DD)',
+            });
+            if (existingEvent) {
+                dateEntry.set_text(existingEvent.date);
+            } else {
+                // Default to today
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                dateEntry.set_text(dateStr);
+            }
+            box.append(dateEntry);
+
+            dialog.set_extra_child(box);
+
+            // Add buttons
+            dialog.add_response('cancel', 'Cancel');
+            dialog.add_response('save', 'Save');
+            dialog.set_response_appearance('save', Adw.ResponseAppearance.SUGGESTED);
+
+            dialog.connect('response', (dlg, response) => {
+                if (response === 'save') {
+                    const name = nameEntry.get_text().trim();
+                    const date = dateEntry.get_text().trim();
+
+                    // Validate inputs
+                    if (!name || !date) {
+                        console.error('Doomsday: Name and date are required');
+                        return;
+                    }
+
+                    // Validate date format
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                        console.error('Doomsday: Invalid date format');
+                        return;
+                    }
+
+                    // Save event
+                    saveEvent(existingEvent?.id, name, date);
+                }
+                dlg.close();
+            });
+
+            dialog.present();
+        };
+
         // Load and display events
-        this._listBox = listBox;
-        this._radioGroup = null;
-        this._loadEvents();
+        loadEvents();
 
         // Add button to create new event
         const addButton = new Gtk.Button({
@@ -95,241 +318,20 @@ export default class DoomsdayPreferences extends ExtensionPreferences {
             css_classes: ['suggested-action'],
             margin_top: 12,
         });
-        addButton.connect('clicked', () => this._onAddEvent(window));
+        addButton.connect('clicked', () => showEventDialog(window, null));
         group.add(addButton);
 
         // Listen for settings changes
-        this._settingsChangedId = this._settings.connect('changed::dday-events',
-            () => this._loadEvents());
+        const settingsChangedId = settings.connect('changed::dday-events',
+            () => loadEvents());
+
+        // Clean up settings signal on window close
+        window.connect('close-request', () => {
+            settings.disconnect(settingsChangedId);
+        });
 
         // Create About page
         this._addAboutPage(window);
-    }
-
-    _loadEvents() {
-        // Clear existing rows
-        let child = this._listBox.get_first_child();
-        while (child) {
-            const next = child.get_next_sibling();
-            this._listBox.remove(child);
-            child = next;
-        }
-
-        // Reset radio group
-        this._radioGroup = null;
-
-        // Load events from settings
-        const eventsJson = this._settings.get_string('dday-events');
-        const selectedId = this._settings.get_string('selected-event-id');
-
-        try {
-            const events = JSON.parse(eventsJson);
-
-            events.forEach(event => {
-                const row = this._createEventRow(event, event.id === selectedId);
-                this._listBox.append(row);
-            });
-
-            // Show placeholder if no events
-            if (events.length === 0) {
-                const row = new Adw.ActionRow({
-                    title: 'No D-Day events yet',
-                    subtitle: 'Click "Add D-Day Event" to create your first countdown',
-                });
-                this._listBox.append(row);
-            }
-
-        } catch (e) {
-            console.error('Doomsday: Failed to load events:', e);
-        }
-    }
-
-    _createEventRow(event, isSelected) {
-        const row = new Adw.ActionRow({
-            title: event.name,
-            subtitle: event.date,
-        });
-
-        // Add radio button for selection
-        const radioButton = new Gtk.CheckButton({
-            active: isSelected,
-            valign: Gtk.Align.CENTER,
-        });
-        radioButton.connect('toggled', () => {
-            if (radioButton.get_active()) {
-                this._settings.set_string('selected-event-id', event.id);
-            }
-        });
-        row.add_prefix(radioButton);
-
-        // Make all radio buttons part of same group
-        if (!this._radioGroup) {
-            this._radioGroup = radioButton;
-        } else {
-            radioButton.set_group(this._radioGroup);
-        }
-
-        // Add edit button
-        const editButton = new Gtk.Button({
-            icon_name: 'document-edit-symbolic',
-            label: 'Edit',
-            valign: Gtk.Align.CENTER,
-            css_classes: ['flat'],
-            tooltip_text: 'Edit this event',
-        });
-        editButton.connect('clicked', () => this._onEditEvent(event));
-        row.add_suffix(editButton);
-
-        // Add delete button
-        const deleteButton = new Gtk.Button({
-            icon_name: 'user-trash-symbolic',
-            label: 'Delete',
-            valign: Gtk.Align.CENTER,
-            css_classes: ['flat', 'destructive-action'],
-            tooltip_text: 'Delete this event',
-        });
-        deleteButton.connect('clicked', () => this._onDeleteEvent(event.id));
-        row.add_suffix(deleteButton);
-
-        return row;
-    }
-
-    _onAddEvent(window) {
-        this._showEventDialog(window, null);
-    }
-
-    _onEditEvent(event) {
-        const window = this._listBox.get_root();
-        this._showEventDialog(window, event);
-    }
-
-    _showEventDialog(window, existingEvent) {
-        const dialog = new Adw.MessageDialog({
-            transient_for: window,
-            modal: true,
-            heading: existingEvent ? 'Edit D-Day Event' : 'New D-Day Event',
-        });
-
-        // Create form content
-        const box = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            spacing: 12,
-            margin_top: 12,
-            margin_bottom: 12,
-            margin_start: 12,
-            margin_end: 12,
-        });
-
-        // Event name entry
-        const nameEntry = new Adw.EntryRow({
-            title: 'Event Name',
-        });
-        if (existingEvent) {
-            nameEntry.set_text(existingEvent.name);
-        }
-        box.append(nameEntry);
-
-        // Date picker (using entry for simplicity)
-        const dateEntry = new Adw.EntryRow({
-            title: 'Date (YYYY-MM-DD)',
-        });
-        if (existingEvent) {
-            dateEntry.set_text(existingEvent.date);
-        } else {
-            // Default to today
-            const today = new Date();
-            const dateStr = today.toISOString().split('T')[0];
-            dateEntry.set_text(dateStr);
-        }
-        box.append(dateEntry);
-
-        dialog.set_extra_child(box);
-
-        // Add buttons
-        dialog.add_response('cancel', 'Cancel');
-        dialog.add_response('save', 'Save');
-        dialog.set_response_appearance('save', Adw.ResponseAppearance.SUGGESTED);
-
-        dialog.connect('response', (dialog, response) => {
-            if (response === 'save') {
-                const name = nameEntry.get_text().trim();
-                const date = dateEntry.get_text().trim();
-
-                // Validate inputs
-                if (!name || !date) {
-                    console.error('Doomsday: Name and date are required');
-                    return;
-                }
-
-                // Validate date format
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                    console.error('Doomsday: Invalid date format');
-                    return;
-                }
-
-                // Save event
-                this._saveEvent(existingEvent?.id, name, date);
-            }
-            dialog.close();
-        });
-
-        dialog.present();
-    }
-
-    _saveEvent(eventId, name, date) {
-        const eventsJson = this._settings.get_string('dday-events');
-        let events = [];
-
-        try {
-            events = JSON.parse(eventsJson);
-        } catch (e) {
-            console.error('Doomsday: Failed to parse events:', e);
-        }
-
-        if (eventId) {
-            // Update existing event
-            const index = events.findIndex(e => e.id === eventId);
-            if (index !== -1) {
-                events[index] = { id: eventId, name, date };
-            }
-        } else {
-            // Create new event with UUID
-            const newId = GLib.uuid_string_random();
-            events.push({ id: newId, name, date });
-
-            // Auto-select if it's the first event
-            if (events.length === 1) {
-                this._settings.set_string('selected-event-id', newId);
-            }
-        }
-
-        // Save back to settings
-        this._settings.set_string('dday-events', JSON.stringify(events));
-    }
-
-    _onDeleteEvent(eventId) {
-        const eventsJson = this._settings.get_string('dday-events');
-        let events = [];
-
-        try {
-            events = JSON.parse(eventsJson);
-        } catch (e) {
-            console.error('Doomsday: Failed to parse events:', e);
-            return;
-        }
-
-        // Remove event
-        events = events.filter(e => e.id !== eventId);
-
-        // If deleted event was selected, clear selection or select first
-        const selectedId = this._settings.get_string('selected-event-id');
-        if (selectedId === eventId) {
-            const newSelectedId = events.length > 0 ? events[0].id : '';
-            this._settings.set_string('selected-event-id', newSelectedId);
-        }
-
-        // Save back to settings
-        this._settings.set_string('dday-events', JSON.stringify(events));
     }
 
     _addAboutPage(window) {
