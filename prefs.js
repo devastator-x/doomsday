@@ -392,6 +392,21 @@ export default class DoomsdayPreferences extends ExtensionPreferences {
         });
         linksGroup.add(issueRow);
 
+        // Donate button
+        const donateRow = new Adw.ActionRow({
+            title: 'Donate',
+            subtitle: 'Support this project via GitHub Sponsors',
+            activatable: true,
+        });
+        const donateIcon = new Gtk.Image({
+            icon_name: 'emblem-favorite-symbolic',
+        });
+        donateRow.add_prefix(donateIcon);
+        donateRow.connect('activated', () => {
+            Gtk.show_uri(window, 'https://github.com/sponsors/devastator-x', 0);
+        });
+        linksGroup.add(donateRow);
+
         // Legal group
         const legalGroup = new Adw.PreferencesGroup({
             title: 'Legal',
